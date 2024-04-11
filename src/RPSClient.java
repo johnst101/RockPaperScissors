@@ -1,0 +1,2 @@
+public class RPSClient {
+}
