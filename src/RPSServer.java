@@ -2,7 +2,7 @@
  * TODO
  *
  * @author Tyler Johnson (tjohson)
- * @version 1.0 Apr 10, 2024
+ * @version 1.0 Apr 11, 2024
  */
 
 // Packages //
@@ -14,28 +14,20 @@ public class RPSServer extends Application {
      * TODO
      *
      * @param primaryStage the primary stage for this application, onto which
-     * the application scene can be set. The primary stage will be embedded in
-     * the browser if the application was launched as an applet.
-     * Applications may create other stages, if needed, but they will not be
-     * primary stages and will not be embedded in the browser.
+     * the application scene can be set.
      * @throws Exception
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // Create the stage setting
+            // Text log
+            // ScrollPane
+            // Scene
+            // Stage title
+            // Set
+            // Show
 
-    }
-
-    /**
-     * TODO
-     */
-    class GameSession implements Runnable {
-        /**
-         * TODO
-         */
-        @Override
-        public void run() {
-
-        }
+        // Create server session on new thread
     }
 
     public static void main(String[] args) {
