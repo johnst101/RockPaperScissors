@@ -11,7 +11,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class GameSession implements Runnable {
+public class ServerGameSession implements Runnable {
     /**TODO*/
     private Socket player1;
     /**TODO*/
@@ -38,12 +38,20 @@ public class GameSession implements Runnable {
     /**
      * TODO
      */
-    public GameSession(int gameNumber, DataOutputStream toPlayer1, DataOutputStream toPlayer2) {
+    public ServerGameSession(int gameNumber, DataOutputStream toPlayer1, DataOutputStream toPlayer2) {
 
     }
 
     /**
-     * TODO
+     * When an object implementing interface <code>Runnable</code> is used
+     * to create a thread, starting the thread causes the object's
+     * <code>run</code> method to be called in that separately executing
+     * thread.
+     * <p>
+     * The general contract of the method <code>run</code> is that it may
+     * take any action whatsoever.
+     *
+     * @see Thread#run()
      */
     @Override
     public void run() {
