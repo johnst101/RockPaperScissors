@@ -7,6 +7,9 @@
 
 // Packages //
 import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
 public class RPSServer extends Application {
@@ -19,15 +22,16 @@ public class RPSServer extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Create the stage setting
-            // Text log
-            // ScrollPane
-            // Scene
-            // Stage title
-            // Set
-            // Show
+        // Create the simple GUI setting
+        TextArea log = new TextArea();
+        Scene scene = new Scene(new ScrollPane(log), 450, 200);
+        primaryStage.setTitle("Rock, Paper, Scissors Server");
+        primaryStage.setScene(scene);
+        primaryStage.show();
 
         // Create server session on new thread
+        Thread serverThread = new Thread(new ServerSession());
+        serverThread.start();
     }
 
     public static void main(String[] args) {
