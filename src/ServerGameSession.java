@@ -112,6 +112,7 @@ public class ServerGameSession implements Runnable {
                 // Then return 1
             // If player2Move equals Scissors
                 // Then return 3
+        return 0;
     }
 
     /**
