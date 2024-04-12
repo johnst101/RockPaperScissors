@@ -30,7 +30,7 @@ public class RPSServer extends Application {
         primaryStage.show();
 
         // Create server session on new thread
-        Thread serverThread = new Thread(new ServerSession());
+        Thread serverThread = new Thread(new ServerSession(log));
         serverThread.start();
     }
 
