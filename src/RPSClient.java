@@ -161,8 +161,13 @@ public class RPSClient extends Application implements RPSConstants {
                     });
                 }
                 while (play) { // Start loop while
-                    // Send move to server
-                    // button action for rock, paper or scissors
+                    if (player == PLAYER1) {
+                        // TODO: need a better way to handle the button press
+                        // button action for rock, paper or scissors
+                        // Send move to server
+                        sendMove();
+
+                    }
                     // Wait for other player to also send move to server
                     // Receive outcome from server
                 }
