@@ -1,8 +1,10 @@
 /**
- * TODO
+ * Starts a new server side connection for a Rock, Paper, Scissors
+ * game and allow connections from a client to play a game against
+ * another client.
  *
  * @author Tyler Johnson (tjohson)
- * @version 1.0 Apr 11, 2024
+ * @version 1.0 Apr 13, 2024
  */
 
 // Packages //
@@ -14,14 +16,15 @@ import javafx.stage.Stage;
 
 public class RPSServer extends Application implements RPSConstants {
     /**
-     * TODO
+     * Acts as the main method in the application. Sets up the visual
+     * server log and creates a new server session thread to after
+     * the application is available.
      *
      * @param primaryStage the primary stage for this application, onto which
      * the application scene can be set.
-     * @throws Exception
      */
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         // Create the simple GUI setting
         TextArea log = new TextArea();
         Scene scene = new Scene(new ScrollPane(log), 500, 200);
@@ -34,6 +37,12 @@ public class RPSServer extends Application implements RPSConstants {
         serverThread.start();
     }
 
+    /**
+     * Placeholder for arguments as the start() method runs
+     * the application.
+     *
+     * @param args The command line arguments.
+     */
     public static void main(String[] args) {
         launch(args);
     }

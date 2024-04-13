@@ -17,30 +17,29 @@ import java.util.Arrays;
 import java.util.Date;
 
 public class ServerGameSession implements Runnable, RPSConstants {
-    /**TODO*/
+    /**Connection to Player 1's client*/
     private Socket player1;
-    /**TODO*/
+    /**Connection to Player 2's client*/
     private Socket player2;
-    /**TODO*/
+    /**The server log visualization element*/
     private TextArea log;
-    /**TODO*/
-    private int gameNumber;
-    /**TODO*/
+    /**Connection to Player 1's client to send messages.*/
     private DataOutputStream toPlayer1;
-    /**TODO*/
+    /**Connection to Player 1's client to receive messages.*/
     private DataInputStream fromPlayer1;
-    /**TODO*/
+    /**Connection to Player 2's client to send messages.*/
     private DataOutputStream toPlayer2;
-    /**TODO*/
+    /**Connection to Player 2's client to receive messages.*/
     private DataInputStream fromPlayer2;
+    /**Number of wins for Player 1*/
     private int player1Wins = 0;
+    /**Number of wins for Player 2*/
     private int player2Wins = 0;
 
     /**
      * TODO
      */
-    public ServerGameSession(int gameNumber, DataOutputStream toPlayer1, DataOutputStream toPlayer2, Socket player1, Socket player2, TextArea log) {
-        this.gameNumber = gameNumber;
+    public ServerGameSession(DataOutputStream toPlayer1, DataOutputStream toPlayer2, Socket player1, Socket player2, TextArea log) {
         this.toPlayer1 = toPlayer1;
         this.toPlayer2 = toPlayer2;
         this.player1 = player1;
@@ -129,11 +128,12 @@ public class ServerGameSession implements Runnable, RPSConstants {
     }
 
     /**
-     * TODO
+     * Compares the moves from both players and returns the result
+     * depending on who is the winner of the round or if it is a draw.
      *
-     * @param player1Move
-     * @param player2Move
-     * @return
+     * @param player1Move The integer representation of player 1's move.
+     * @param player2Move The integer representation of player 2's move.
+     * @return The integer result for the round winner or a draw.
      */
     private int compareMoves(int player1Move, int player2Move) throws Exception {
         // If player1Move equals Rock
@@ -194,7 +194,16 @@ public class ServerGameSession implements Runnable, RPSConstants {
     }
 
     /**
-     * TODO
+     * Writes all the integer values of Player 1 and Player 2 for their
+     * respective moves, and win count.
+     *
+     * @param toPlayer1 The data output connection to Player 1.
+     * @param toPlayer2 The data output connection to Player 2.
+     * @param player1Move The integer representation of Player 1's move.
+     * @param player2Move The integer representation of Player 2's move.
+     * @param player1Wins The integer representation of Player 1's wins.
+     * @param player2Wins The integer representation of Player 2's wins.
+     * @throws IOException Throws an IOException if there are issues with sending the results.
      */
     private void sendResults(DataOutputStream toPlayer1, DataOutputStream toPlayer2, int player1Move, int player2Move, int player1Wins, int player2Wins) throws IOException {
         toPlayer1.writeInt(player1Wins);

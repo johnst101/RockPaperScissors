@@ -1,8 +1,10 @@
 /**
- * TODO
+ * Started as a new thread from the RPSServer class to run the
+ * server session and manage the client connections and start
+ * the game.
  *
  * @author Tyler Johnson (tjohson)
- * @version 1.0 Apr 11, 2024
+ * @version 1.0 Apr 13, 2024
  */
 
 // Packages //
@@ -16,13 +18,13 @@ import java.util.Arrays;
 import java.util.Date;
 
 public class ServerSession implements Runnable, RPSConstants {
-    /**TODO*/
+    /**Which session or game is being connected/played.*/
     private int gameNumber = 1;
-    /**TODO*/
+    /**The server log visualization element*/
     private TextArea log;
-    /**TODO*/
+    /**Connection to Player 1's client to send connection messages.*/
     private DataOutputStream toPlayer1;
-    /**TODO*/
+    /**Connection to Player 2's client to send connection messages.*/
     private DataOutputStream toPlayer2;
 
     public ServerSession(TextArea log) {
@@ -76,7 +78,7 @@ public class ServerSession implements Runnable, RPSConstants {
                 Platform.runLater(() -> log.appendText(new Date() + ": Starting thread for game " + gameNumber + "\n"));
                 gameNumber++;
                 // Start new GameSession on new thread
-                new Thread(new ServerGameSession(gameNumber, toPlayer1, toPlayer2, player1, player2, log)).start();
+                new Thread(new ServerGameSession(toPlayer1, toPlayer2, player1, player2, log)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();

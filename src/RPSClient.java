@@ -8,6 +8,7 @@
 // Packages //
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -17,6 +18,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -83,20 +85,37 @@ public class RPSClient extends Application implements RPSConstants {
         buttonContainer.setAlignment(Pos.CENTER);
         buttonContainer.setSpacing(10);
 
+        // Title and Status containers
+        VBox titleContainer = new VBox(title);
+        titleContainer.setAlignment(Pos.CENTER);
+        titleContainer.setPadding(new Insets(10));
+        title.setFont(new Font("Arial", 24));
+        VBox statusContainer = new VBox(status);
+        statusContainer.setAlignment(Pos.CENTER);
+        statusContainer.setPadding(new Insets(10));
+        status.setFont(new Font("Arial", 16));
+
         // VBox for player1Score
         VBox player1Container = new VBox(player1ScoreTitle, player1Score);
         player1Container.setAlignment(Pos.CENTER);
         player1Container.setSpacing(20);
+        player1Container.setPadding(new Insets(10));
+        player1ScoreTitle.setFont(new Font("Arial", 16));
+        player1Score.setFont(new Font("Arial", 16));
         // VBox for player2Score
         VBox player2Container = new VBox(player2ScoreTitle, player2Score);
         player2Container.setAlignment(Pos.CENTER);
         player2Container.setSpacing(20);
+        player2Container.setPadding(new Insets(10));
+        player2ScoreTitle.setFont(new Font("Arial", 16));
+        player2Score.setFont(new Font("Arial", 16));
 
         // BorderPane to hold all content
-        BorderPane pane = new BorderPane(buttonContainer, title, player2Container, status, player1Container);
+        BorderPane pane = new BorderPane(buttonContainer, titleContainer, player2Container, statusContainer, player1Container);
 
         // Create Scene for pane
-        Scene scene = new Scene(pane);
+        Scene scene = new Scene(pane, 1200, 700);
+        primaryStage.setTitle("Rock, Paper, Scissors");
         // Set Scene
         primaryStage.setScene(scene);
         // Show stage
@@ -121,13 +140,13 @@ public class RPSClient extends Application implements RPSConstants {
         });
 
         // connectToServer
-        connectToServer();
+        connectToServer(primaryStage);
     }
 
     /**
      * TODO
      */
-    private void connectToServer() {
+    private void connectToServer(Stage primaryStage) {
         // TRY //
         try {
             // Create Socket
@@ -135,8 +154,12 @@ public class RPSClient extends Application implements RPSConstants {
             // Initialize input and output streams
             fromServer = new DataInputStream(socket.getInputStream());
             toServer = new DataOutputStream(socket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+            status.setText("Error occurred when connecting. Closing the game.");
+            primaryStage.close();
         }
 
         Thread newSession = new Thread(new ClientGameSession());
@@ -167,7 +190,7 @@ public class RPSClient extends Application implements RPSConstants {
                 if (player == PLAYER1) {
                     Platform.runLater(() -> {
                         // Player number notification from server
-                        title.setText("Player 2");
+                        title.setText("Player 1");
                         // Waiting for player 2 to join notification
                         status.setText("Waiting for Player 2 to join");
                     });
@@ -193,6 +216,8 @@ public class RPSClient extends Application implements RPSConstants {
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -212,7 +237,7 @@ public class RPSClient extends Application implements RPSConstants {
     /**
      * TODO
      */
-    private void receiveOutcome(int player) throws IOException {
+    private void receiveOutcome(int player) throws IOException, Exception {
         // Receive round winner
         int roundWinner = fromServer.readInt();
         // Receive scores
@@ -220,15 +245,17 @@ public class RPSClient extends Application implements RPSConstants {
         int player2Wins = fromServer.readInt();
         // update score labels
         Platform.runLater(() -> {
-                    player1Score.setText(String.valueOf(player1Wins));
-                    player2Score.setText(String.valueOf(player2Wins));
+            player1Score.setText(String.valueOf(player1Wins));
+            player2Score.setText(String.valueOf(player2Wins));
         });
         // Receive moves
         int player1Move = fromServer.readInt();
+        String move1 = moveAsString(player1Move);
         int player2Move = fromServer.readInt();
+        String move2 = moveAsString(player2Move);
         Platform.runLater(() -> {
-            player1ScoreTitle.setText("Player 1: " + String.valueOf(player1Move));
-            player2ScoreTitle.setText("Player 2: " + String.valueOf(player2Move));
+            player1ScoreTitle.setText("Player 1: " + move1);
+            player2ScoreTitle.setText("Player 2: " + move2);
         });
 
         if (roundWinner == PLAYER1_ROUND_WIN) {
@@ -244,7 +271,7 @@ public class RPSClient extends Application implements RPSConstants {
         } else if (roundWinner == PLAYER2_ROUND_WIN) {
             if (player == PLAYER1) {
                 Platform.runLater(() -> {
-                    status.setText("Player 2 wont that round.");
+                    status.setText("Player 2 won that round.");
                 });
             } else {
                 Platform.runLater(() -> {
@@ -308,6 +335,17 @@ public class RPSClient extends Application implements RPSConstants {
         rock.setDisable(true);
         paper.setDisable(true);
         scissors.setDisable(true);
+    }
+
+    // TODO
+    private String moveAsString(int move) throws Exception {
+        if (move == ROCK) {
+            return "Rock";
+        }
+        if (move == PAPER) {
+            return "Paper";
+        }
+        return "Scissors";
     }
 
     /**
