@@ -6,16 +6,23 @@
  */
 
 // Packages //
+import javafx.scene.control.TextArea;
+
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.Date;
 
 public class ServerGameSession implements Runnable {
     /**TODO*/
     private Socket player1;
     /**TODO*/
     private Socket player2;
+    /**TODO*/
+    private TextArea log;
     /**TODO*/
     private int gameNumber;
     /**TODO*/
@@ -26,8 +33,8 @@ public class ServerGameSession implements Runnable {
     private DataOutputStream toPlayer2;
     /**TODO*/
     private DataInputStream fromPlayer2;
-    private int player1Wins;
-    private int player2Wins;
+    private int player1Wins = 0;
+    private int player2Wins = 0;
     /**TODO*/
     private enum Move {
         ROCK,
@@ -38,8 +45,13 @@ public class ServerGameSession implements Runnable {
     /**
      * TODO
      */
-    public ServerGameSession(int gameNumber, DataOutputStream toPlayer1, DataOutputStream toPlayer2) {
-
+    public ServerGameSession(int gameNumber, DataOutputStream toPlayer1, DataOutputStream toPlayer2, Socket player1, Socket player2, TextArea log) {
+        this.gameNumber = gameNumber;
+        this.toPlayer1 = toPlayer1;
+        this.toPlayer2 = toPlayer2;
+        this.player1 = player1;
+        this.player2 = player2;
+        this.log = log;
     }
 
     /**
@@ -56,7 +68,17 @@ public class ServerGameSession implements Runnable {
     @Override
     public void run() {
         // TRY //
-        // Infinite loop until win or draw state reached
+        try {
+            fromPlayer1 = new DataInputStream(player1.getInputStream());
+            fromPlayer2 = new DataInputStream(player2.getInputStream());
+
+            // Infinite loop until win or draw state reached
+            while(true) {
+                toPlayer1.writeInt(1);
+                toPlayer2.writeInt(2);
+
+            }
+        }
             // Notify players to choose move
             // Receive move from player1
                 // Notify waiting for player2 to make move???
@@ -79,8 +101,10 @@ public class ServerGameSession implements Runnable {
                     // Notify players that player1 won the game
                 // If player2Wins equals 5 AND player1Wins less than 5
                     // Notify players that player2 won the game
-
-        // CATCH //
+         catch (IOException e) {
+             e.printStackTrace();
+             log.appendText(new Date() + ": \n" + "\t" + Arrays.toString(e.getStackTrace()));
+         }
     }
 
     /**

@@ -76,7 +76,7 @@ public class ServerSession implements Runnable {
                 Platform.runLater(() -> log.appendText(new Date() + ": Starting thread for game " + gameNumber + "\n"));
                 gameNumber++;
                 // Start new GameSession on new thread
-                new Thread(new ServerGameSession(gameNumber, toPlayer1, toPlayer2)).start();
+                new Thread(new ServerGameSession(gameNumber, toPlayer1, toPlayer2, player1, player2, log)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
