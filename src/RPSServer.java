@@ -24,7 +24,7 @@ public class RPSServer extends Application implements RPSConstants {
     public void start(Stage primaryStage) throws Exception {
         // Create the simple GUI setting
         TextArea log = new TextArea();
-        Scene scene = new Scene(new ScrollPane(log), 450, 200);
+        Scene scene = new Scene(new ScrollPane(log), 500, 200);
         primaryStage.setTitle("Rock, Paper, Scissors Server");
         primaryStage.setScene(scene);
         primaryStage.show();

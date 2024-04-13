@@ -7,6 +7,7 @@
 
 // Packages //
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -135,20 +136,39 @@ public class RPSClient extends Application implements RPSConstants {
          */
         @Override
         public void run() {
-            // Receive player number connecting
-            // If player1
-                // Waiting for player 2 to join notification
-                // Player number notification from server
-                // Receive indicator of player2 join
-                // Display notification of player2 join
-                // Display notification to make move when ready
-            // Else If player2
-                // Make your move when ready
-            // Start loop while
-                // Send move to server
+            try {
+                // Receive player number connecting
+                int player = fromServer.readInt();
+                // If player1
+                if (player == PLAYER1) {
+                    Platform.runLater(() -> {
+                        // Player number notification from server
+                        title.setText("Player 2");
+                        // Waiting for player 2 to join notification
+                        status.setText("Waiting for Player 2 to join");
+                    });
+
+                    // Receive indicator of player2 join
+                    fromServer.readInt();
+
+                    // Display notification of player2 join
+                    Platform.runLater(() -> status.setText("Player 2 joined the game. Make your pick for the round."));
+                } else if (player == PLAYER2) { // Else If player2
+                    // Make your move when ready
+                    Platform.runLater(() -> {
+                        title.setText("Player 2");
+                        status.setText("All players joined the game. Make your pick for the round.");
+                    });
+                }
+                while (play) { // Start loop while
+                    // Send move to server
                     // button action for rock, paper or scissors
-                // Wait for other player to also send move to server
-                // Receive outcome from server
+                    // Wait for other player to also send move to server
+                    // Receive outcome from server
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

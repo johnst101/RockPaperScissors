@@ -59,7 +59,7 @@ public class ServerSession implements Runnable, RPSConstants {
                     log.appendText("Player 1's IP address is " + player1.getInetAddress().getHostAddress() + "\n");
                 });
                 // Notify first player they are connected and 'Player 1'
-                toPlayer1.writeInt(1);
+                toPlayer1.writeInt(PLAYER1);
 
                 // Connect second player
                 Socket player2 = serverSocket.accept();
@@ -70,7 +70,7 @@ public class ServerSession implements Runnable, RPSConstants {
                     log.appendText("Player 2's IP address is " + player2.getInetAddress().getHostAddress() + "\n");
                 });
                 // Notify second player they are connected and 'Player 2'
-                toPlayer2.writeInt(2);
+                toPlayer2.writeInt(PLAYER2);
 
                 // Log that GameSession x is starting
                 Platform.runLater(() -> log.appendText(new Date() + ": Starting thread for game " + gameNumber + "\n"));

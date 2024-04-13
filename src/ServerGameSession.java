@@ -65,11 +65,11 @@ public class ServerGameSession implements Runnable, RPSConstants {
         try {
             fromPlayer1 = new DataInputStream(player1.getInputStream());
             fromPlayer2 = new DataInputStream(player2.getInputStream());
+
+            toPlayer1.writeInt(PLAYER1);
+            toPlayer2.writeInt(PLAYER2);
             // Infinite loop until win or draw state reached
             while(true) {
-                // Notify players to choose move
-                toPlayer1.writeInt(1);
-                toPlayer2.writeInt(1);
                 // Receive move from player1
                 int player1Move = fromPlayer1.readInt();
                 // TODO: Notify waiting for player2 to make move???
