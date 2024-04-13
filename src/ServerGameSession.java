@@ -72,10 +72,8 @@ public class ServerGameSession implements Runnable, RPSConstants {
             while(true) {
                 // Receive move from player1
                 int player1Move = fromPlayer1.readInt();
-                // TODO: Notify waiting for player2 to make move???
                 // Receive move from player2
                 int player2Move = fromPlayer2.readInt();
-                // TODO: Notify waiting for player1 to make move???
                 // Check for round win or draw
                 int result = compareMoves(player1Move, player2Move);
                 // If player1 move > player2 move
@@ -85,7 +83,7 @@ public class ServerGameSession implements Runnable, RPSConstants {
                     toPlayer1.writeInt(PLAYER1_ROUND_WIN);
                     toPlayer2.writeInt(PLAYER1_ROUND_WIN);
                     // Send moves to each player and updated score
-                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move);
+                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
 
                 } else if (result == 2) { // Else if player2 move > player1 move
                     // player2 round win
@@ -93,34 +91,34 @@ public class ServerGameSession implements Runnable, RPSConstants {
                     toPlayer1.writeInt(PLAYER2_ROUND_WIN);
                     toPlayer2.writeInt(PLAYER2_ROUND_WIN);
                     // Send moves to each player and updated score
-                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move);
+                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
                 } else { // Else
                     // round draw
                     // notify players of results
                     toPlayer1.writeInt(ROUND_DRAW);
                     toPlayer2.writeInt(ROUND_DRAW);
                     // Send moves to each player and updated score
-                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move);
+                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
                     // continue
                     continue;
                 }
-                // Check for full game win
-                // If player1Wins equals 5 AND player2Wins less than 5
-                if (player1Wins == 5 && player2Wins < 5) {
-                    // Notify players that player1 won the game
-                    toPlayer1.writeInt(PLAYER1_TOTAL_WIN);
-                    toPlayer2.writeInt(PLAYER1_TOTAL_WIN);
-                    // Send moves to each player and updated score
-                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move);
-                }
-                // If player2Wins equals 5 AND player1Wins less than 5
-                if (player2Wins == 5 && player1Wins < 5) {
-                    // Notify players that player2 won the game
-                    toPlayer1.writeInt(PLAYER2_TOTAL_WIN);
-                    toPlayer2.writeInt(PLAYER2_TOTAL_WIN);
-                    // Send moves to each player and updated score
-                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move);
-                }
+//                // Check for full game win
+//                // If player1Wins equals 5 AND player2Wins less than 5
+//                if (player1Wins == 5 && player2Wins < 5) {
+//                    // Notify players that player1 won the game
+//                    toPlayer1.writeInt(PLAYER1_TOTAL_WIN);
+//                    toPlayer2.writeInt(PLAYER1_TOTAL_WIN);
+//                    // Send moves to each player and updated score
+//                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
+//                }
+//                // If player2Wins equals 5 AND player1Wins less than 5
+//                if (player2Wins == 5 && player1Wins < 5) {
+//                    // Notify players that player2 won the game
+//                    toPlayer1.writeInt(PLAYER2_TOTAL_WIN);
+//                    toPlayer2.writeInt(PLAYER2_TOTAL_WIN);
+//                    // Send moves to each player and updated score
+//                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
+//                }
             }
         } catch (IOException e) {
              e.printStackTrace();
@@ -198,8 +196,14 @@ public class ServerGameSession implements Runnable, RPSConstants {
     /**
      * TODO
      */
-    private void sendResults(DataOutputStream toPlayer1, DataOutputStream toPlayer2, int player1Move, int player2Move) throws IOException {
+    private void sendResults(DataOutputStream toPlayer1, DataOutputStream toPlayer2, int player1Move, int player2Move, int player1Wins, int player2Wins) throws IOException {
+        toPlayer1.writeInt(player1Wins);
+        toPlayer1.writeInt(player2Wins);
+        toPlayer2.writeInt(player1Wins);
+        toPlayer2.writeInt(player2Wins);
         toPlayer1.writeInt(player1Move);
+        toPlayer1.writeInt(player2Move);
+        toPlayer2.writeInt(player1Move);
         toPlayer2.writeInt(player2Move);
     }
 }

@@ -51,6 +51,8 @@ public class RPSClient extends Application implements RPSConstants {
     private Button paper = new Button("Paper");
     /**TODO*/
     private Button scissors = new Button("Scissors");
+    /**TODO*/
+    private int move;
 
     /**
      * TODO
@@ -74,6 +76,7 @@ public class RPSClient extends Application implements RPSConstants {
         paper.setGraphic(paperImgView);
         // Scissors button
         scissors.setGraphic(scissorsImgView);
+        disableButtons();
 
         // Hbox for move options
         HBox buttonContainer = new HBox(rock, paper, scissors);
@@ -99,6 +102,24 @@ public class RPSClient extends Application implements RPSConstants {
         // Show stage
         primaryStage.show();
 
+        rock.setOnAction(e -> {
+            move = ROCK;
+            status.setText("Waiting for the other player to make their move");
+            waiting = false;
+        });
+
+        paper.setOnAction(e -> {
+            move = PAPER;
+            status.setText("Waiting for the other player to make their move");
+            waiting = false;
+        });
+
+        scissors.setOnAction(e -> {
+            move = SCISSORS;
+            status.setText("Waiting for the other player to make their move");
+            waiting = false;
+        });
+
         // connectToServer
         connectToServer();
     }
@@ -122,6 +143,9 @@ public class RPSClient extends Application implements RPSConstants {
         newSession.start();
     }
 
+    /**
+     * TODO
+     */
     private class ClientGameSession implements Runnable {
         /**
          * When an object implementing interface <code>Runnable</code> is used
@@ -160,18 +184,14 @@ public class RPSClient extends Application implements RPSConstants {
                         status.setText("All players joined the game. Make your pick for the round.");
                     });
                 }
-                while (play) { // Start loop while
-                    if (player == PLAYER1) {
-                        // TODO: need a better way to handle the button press
-                        // button action for rock, paper or scissors
-                        // Send move to server
-                        sendMove();
-
-                    }
-                    // Wait for other player to also send move to server
-                    // Receive outcome from server
+                while (play) {
+                    enableButtons();
+                    waitForPlayer();
+                    toServer.writeInt(move);
+                    disableButtons();
+                    receiveOutcome(player);
                 }
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
         }
@@ -180,7 +200,7 @@ public class RPSClient extends Application implements RPSConstants {
     /**
      * TODO
      */
-    private void waitForOtherPlayer() throws InterruptedException {
+    private void waitForPlayer() throws InterruptedException {
         // Sleep thread until waiting is false
         while (waiting) {
             Thread.sleep(100);
@@ -192,43 +212,102 @@ public class RPSClient extends Application implements RPSConstants {
     /**
      * TODO
      */
-    private void sendMove(int playerMove) throws IOException {
-        // write enum selection based on button click action to server
+    private void receiveOutcome(int player) throws IOException {
+        // Receive round winner
+        int roundWinner = fromServer.readInt();
+        // Receive scores
+        int player1Wins = fromServer.readInt();
+        int player2Wins = fromServer.readInt();
+        // update score labels
+        Platform.runLater(() -> {
+                    player1Score.setText(String.valueOf(player1Wins));
+                    player2Score.setText(String.valueOf(player2Wins));
+        });
+        // Receive moves
+        int player1Move = fromServer.readInt();
+        int player2Move = fromServer.readInt();
+        Platform.runLater(() -> {
+            player1ScoreTitle.setText("Player 1: " + String.valueOf(player1Move));
+            player2ScoreTitle.setText("Player 2: " + String.valueOf(player2Move));
+        });
+
+        if (roundWinner == PLAYER1_ROUND_WIN) {
+            if (player == PLAYER1) {
+                Platform.runLater(() -> {
+                    status.setText("You won that round!");
+                });
+            } else {
+                Platform.runLater(() -> {
+                    status.setText("Player 1 won that round.");
+                });
+            }
+        } else if (roundWinner == PLAYER2_ROUND_WIN) {
+            if (player == PLAYER1) {
+                Platform.runLater(() -> {
+                    status.setText("Player 2 wont that round.");
+                });
+            } else {
+                Platform.runLater(() -> {
+                    status.setText("You won that round!");
+                });
+            }
+        } else {
+            Platform.runLater(() -> {
+                status.setText("That round was a draw.");
+            });
+        }
+        // If a player reached 5 points
+        if (player1Wins == 5 || player2Wins == 5) {
+            if (player1Wins == 5) {
+                // play goes to false
+                play = false;
+                // If this client is player1
+                if (player == PLAYER1) {
+                    // Notify, "You Won!"
+                    Platform.runLater(() -> {
+                        status.setText("You Won!");
+                    });
+                } else { // else if client is player2
+                    // Notify, "Player 1 Won."
+                    Platform.runLater(() -> {
+                        status.setText("Player 1 Won.");
+                    });
+                }
+            } else if (player2Wins == 5) {
+                // play goes to false
+                play = false;
+                // If this client is player1
+                if (player == PLAYER1) {
+                    // Notify, "Player 2 Won."
+                    Platform.runLater(() -> {
+                        status.setText("Player 2 Won.");
+                    });
+                } else { // else if client is player2
+                    // Notify, "You Won!"
+                    Platform.runLater(() -> {
+                        status.setText("You Won!");
+                    });
+                }
+            }
+        }
     }
 
     /**
      * TODO
      */
-    private void receiveOutcome() throws IOException {
-        // Receive scores
-            // update score labels
-        // If a player reached 5 points
-            // If player1 wins
-                // play goes to false
-                // If this client is player1
-                    // Notify, "You Won!"
-                // else if client is player2
-                    // Notify, "Player 1 Won."
-            // Else if player2 wins
-                // play goes to false
-                // If this client is player1
-                    // Notify, "Player 2 Won!"
-                // else if client is player2
-                    // Notify, "You Won!"
-        // Else If player1 wins round
-            // play goes to false
-            // If this client is player1
-                // Notify, "You won this round!"
-            // else if client is player2
-                // Notify, "Player 1 Won this round."
-        // Else If player2 wins round
-            // play goes to false
-            // If this client is player1
-                // Notify, "Player 2 Won this round."
-            // else if client is player2
-                // Notify, "You Won this round!"
-        // Else round draw
-            // notify both players of round draw and pick again
+    private void enableButtons() {
+        rock.setDisable(false);
+        paper.setDisable(false);
+        scissors.setDisable(false);
+    }
+
+    /**
+     * TODO
+     */
+    private void disableButtons() {
+        rock.setDisable(true);
+        paper.setDisable(true);
+        scissors.setDisable(true);
     }
 
     /**
