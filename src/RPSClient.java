@@ -7,12 +7,20 @@
 
 // Packages //
 import javafx.application.Application;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
 
 public class RPSClient extends Application implements RPSConstants {
     /**TODO*/
@@ -34,7 +42,7 @@ public class RPSClient extends Application implements RPSConstants {
     /**TODO*/
     private DataOutputStream toServer;
     /**TODO*/
-    private boolean waiting = false;
+    private boolean waiting = true;
     /**TODO*/
     private boolean play = true;
     private Button rock = new Button("Rock");
@@ -42,12 +50,6 @@ public class RPSClient extends Application implements RPSConstants {
     private Button paper = new Button("Paper");
     /**TODO*/
     private Button scissors = new Button("Scissors");
-    /**TODO*/
-    private enum Move {
-        ROCK,
-        PAPER,
-        SCISSORS
-    }
 
     /**
      * TODO
@@ -59,21 +61,45 @@ public class RPSClient extends Application implements RPSConstants {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Buttons customized to be the symbols
-            // Rock button
-            // Paper button
-            // Scissors button
+        Image rockImg = new Image("Rock.png");
+        ImageView rockImgView = new ImageView(rockImg);
+        Image paperImg = new Image("Paper.png");
+        ImageView paperImgView = new ImageView(paperImg);
+        Image scissorsImg = new Image("Scissors.png");
+        ImageView scissorsImgView = new ImageView(scissorsImg);
+        // Rock button
+        rock.setGraphic(rockImgView);
+        // Paper button
+        paper.setGraphic(paperImgView);
+        // Scissors button
+        scissors.setGraphic(scissorsImgView);
+
         // Hbox for move options
+        HBox buttonContainer = new HBox(rock, paper, scissors);
+        buttonContainer.setAlignment(Pos.CENTER);
+        buttonContainer.setSpacing(10);
+
+        // VBox for player1Score
+        VBox player1Container = new VBox(player1ScoreTitle, player1Score);
+        player1Container.setAlignment(Pos.CENTER);
+        player1Container.setSpacing(20);
+        // VBox for player2Score
+        VBox player2Container = new VBox(player2ScoreTitle, player2Score);
+        player2Container.setAlignment(Pos.CENTER);
+        player2Container.setSpacing(20);
+
         // BorderPane to hold all content
-            // title at top
-            // hbox in center
-            // status on bottom
-            // player1 score title and number on left
-            // player2 score title and number on right
+        BorderPane pane = new BorderPane(buttonContainer, title, player2Container, status, player1Container);
+
         // Create Scene for pane
+        Scene scene = new Scene(pane);
         // Set Scene
+        primaryStage.setScene(scene);
         // Show stage
+        primaryStage.show();
 
         // connectToServer
+        connectToServer();
     }
 
     /**
@@ -81,11 +107,18 @@ public class RPSClient extends Application implements RPSConstants {
      */
     private void connectToServer() {
         // TRY //
-        // Create Socket
-        // Initialize input and output streams
-        // CATCH //
-        // print log or stack trace
-        // New thread for ClientGameSession
+        try {
+            // Create Socket
+            Socket socket = new Socket(host, 8000);
+            // Initialize input and output streams
+            fromServer = new DataInputStream(socket.getInputStream());
+            toServer = new DataOutputStream(socket.getOutputStream());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Thread newSession = new Thread(new ClientGameSession());
+        newSession.start();
     }
 
     private class ClientGameSession implements Runnable {
@@ -124,12 +157,17 @@ public class RPSClient extends Application implements RPSConstants {
      */
     private void waitForOtherPlayer() throws InterruptedException {
         // Sleep thread until waiting is false
+        while (waiting) {
+            Thread.sleep(100);
+        }
+
+        waiting = true;
     }
 
     /**
      * TODO
      */
-    private void sendMove(Move playerMove) throws IOException {
+    private void sendMove(int playerMove) throws IOException {
         // write enum selection based on button click action to server
     }
 
