@@ -14,7 +14,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class RPSClient extends Application {
+public class RPSClient extends Application implements RPSConstants {
     /**TODO*/
     private Label title = new Label();
     /**TODO*/

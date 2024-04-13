@@ -12,7 +12,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
-public class RPSServer extends Application {
+public class RPSServer extends Application implements RPSConstants {
     /**
      * TODO
      *

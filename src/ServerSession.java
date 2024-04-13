@@ -15,7 +15,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Date;
 
-public class ServerSession implements Runnable {
+public class ServerSession implements Runnable, RPSConstants {
     /**TODO*/
     private int gameNumber = 1;
     /**TODO*/
