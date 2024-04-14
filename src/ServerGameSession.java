@@ -1,21 +1,19 @@
 /**
- * TODO
+ * Runs each sever side game session on a different thread
+ * and allows for clients to play the game seamlessly while other
+ * clients are playing on a different thread.
  *
  * @author Tyler Johnson (tjohson)
- * @version 1.0 Apr 11, 2024
+ * @version 1.0 Apr 14, 2024
  */
 
 // Packages //
 import javafx.scene.control.TextArea;
-
-import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 public class ServerGameSession implements Runnable, RPSConstants {
@@ -33,15 +31,20 @@ public class ServerGameSession implements Runnable, RPSConstants {
     private DataOutputStream toPlayer2;
     /**Connection to Player 2's client to receive messages.*/
     private DataInputStream fromPlayer2;
-    /**Number of wins for Player 1*/
+    /**Number of wins for Player 1.*/
     private int player1Wins = 0;
-    /**Number of wins for Player 2*/
+    /**Number of wins for Player 2.*/
     private int player2Wins = 0;
-    /**TODO*/
+    /**List of the client connections in the current session.*/
     private List<Socket> clients;
 
     /**
-     * TODO
+     * Creates a new game session with the player Sockets and log
+     * to run the game.
+     *
+     * @param player1 The Socket for the first player connected.
+     * @param player2 The Socket for the second player connected.
+     * @param log The server log in case of any exceptions to write.
      */
     public ServerGameSession(Socket player1, Socket player2, TextArea log) {
         this.player1 = player1;
@@ -108,9 +111,9 @@ public class ServerGameSession implements Runnable, RPSConstants {
                 }
             }
         } catch (IOException e) {
-            handleDisconnection(); //TODO:
+            handleDisconnection();
         } catch (Exception e) {
-            e.printStackTrace();
+            handleDisconnection();
         }
     }
 
@@ -204,23 +207,35 @@ public class ServerGameSession implements Runnable, RPSConstants {
     }
 
     /**
-     * TODO
-     * @param disconnectedClient
+     * In case of disconnection during the game, this method should
+     * notify the user still connected that the other player disconnected.
      */
-    private void handleDisconnection(Socket disconnectedClient) {
-        clients.remove(disconnectedClient);
-        for (Socket client : clients) {
-            if (client == player1) {
-                try {
-                    toPlayer1.writeInt(9);
-                } catch (IOException e) {
-                    e.printStackTrace();
+    private void handleDisconnection() {
+        if (!player1.isClosed()) {
+
+        } else {
+            clients.remove(player1);
+            for (Socket client : clients) {
+                if (client == player2) {
+                    try {
+                        toPlayer2.writeInt(9);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            } else if (client == player2) {
-                try {
-                    toPlayer2.writeInt(9);
-                } catch (IOException e) {
-                    e.printStackTrace();
+            }
+        }
+        if (!player2.isClosed()) {
+
+        } else {
+            clients.remove(player2);
+            for (Socket client : clients) {
+                if (client == player1) {
+                    try {
+                        toPlayer1.writeInt(9);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }

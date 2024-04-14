@@ -1,8 +1,11 @@
 /**
- * TODO
+ * Client side of the Rock, Paper, Scissors game. This hosts
+ * each player and creates a new thread for each connection to
+ * the server. It also holds the GUI interactions for the
+ * player and allows for interaction with the other players.
  *
  * @author Tyler Johnson (tjohson)
- * @version 1.0 Apr 11, 2024
+ * @version 1.0 Apr 14, 2024
  */
 
 // Packages //
@@ -26,48 +29,49 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class RPSClient extends Application implements RPSConstants {
-    /**TODO*/
+    /**Title object for player title.*/
     private Label title = new Label();
-    /**TODO*/
+    /**Game messages are pushed through the status object.*/
     private Label status = new Label();
-    /**TODO*/
+    /**The title of Player 1's score and where their move is tracked.*/
     private Label player1ScoreTitle = new Label();
-    /**TODO*/
+    /**The total wins Player 1 has.*/
     private Label player1Score = new Label();
-    /**TODO*/
+    /**The title of Player 2's score and where their move is tracked.*/
     private Label player2ScoreTitle = new Label();
-    /**TODO*/
+    /**The total wins Player 2 has.*/
     private Label player2Score = new Label();
-    /**TODO*/
+    /**The host connection string.*/
     private String host = "localhost";
-    /**TODO*/
+    /**The inputs being received from the server.*/
     private DataInputStream fromServer;
-    /**TODO*/
+    /**The outputs being sent to the server.*/
     private DataOutputStream toServer;
-    /**TODO*/
+    /**Indicator for if the player is waiting for the other player.*/
     private boolean waiting = true;
-    /**TODO*/
+    /**Indicator of if the game is over or still going.*/
     private boolean play = true;
+    /**Button for Rock selection.*/
     private Button rock = new Button();
-    /**TODO*/
+    /**Button for Paper selection.*/
     private Button paper = new Button();
-    /**TODO*/
+    /**Button for Scissors selection.*/
     private Button scissors = new Button();
-    /**TODO*/
+    /**Integer representation of a player's move*/
     private int move;
-    /**TODO*/
+    /**Socket for this player's connection*/
     private Socket socket;
-    /**TODO*/
+    /**First scene.*/
     private Scene scene;
-    /**TODO*/
+    /**Ending scene.*/
     private Scene scene2;
 
     /**
-     * TODO
+     * Sets up the GUI and calls for the connection to the player.
      *
      * @param primaryStage the primary stage for this application, onto which
      * the application scene can be set.
-     * @throws Exception
+     * @throws Exception On the quit button presses an exception can be thrown when closing.
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -80,8 +84,6 @@ public class RPSClient extends Application implements RPSConstants {
         scissors.setGraphic(new ImageView(new Image("Scissors.png")));
         disableButtons();
 
-        Button quit = new Button("Quit Game");
-
         // Hbox for move options
         HBox buttonContainer = new HBox(rock, paper, scissors);
         buttonContainer.setAlignment(Pos.CENTER);
@@ -93,7 +95,7 @@ public class RPSClient extends Application implements RPSConstants {
         titleContainer.setAlignment(Pos.CENTER);
         titleContainer.setPadding(new Insets(10));
         title.setFont(new Font("Arial", 24));
-        VBox statusContainer = new VBox(status, quit);
+        VBox statusContainer = new VBox(status);
         statusContainer.setSpacing(20);
         statusContainer.setAlignment(Pos.CENTER);
         statusContainer.setPadding(new Insets(10));
@@ -153,17 +155,6 @@ public class RPSClient extends Application implements RPSConstants {
             waiting = false;
         });
 
-        quit.setOnAction(e -> {
-            play = false;
-            try {
-                socket.close();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
-            primaryStage.close();
-            System.exit(0);
-        });
-
         quit1.setOnAction(e -> {
             play = false;
             try {
@@ -197,7 +188,10 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * Creates the socket and connection to the server. Sets
+     * up the IO with teh server for this player.
+     *
+     * @param primaryStage The stage of the GUI to be able to set different scenes throughout gameplay.
      */
     private void connectToServer(Stage primaryStage) {
         // TRY //
@@ -225,11 +219,17 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * An inner class to handle each new client connection on a separate thread.
      */
     private class ClientGameSession implements Runnable {
+        /**The stage of the GUI to be able to set different scenes throughout gameplay.*/
         private Stage primaryStage;
 
+        /**
+         * Creates a new client side game session and runs the gameplay.
+         *
+         * @param primaryStage The stage of the GUI to be able to set different scenes throughout gameplay.
+         */
         public ClientGameSession(Stage primaryStage) {
             this.primaryStage = primaryStage;
         }
@@ -272,7 +272,7 @@ public class RPSClient extends Application implements RPSConstants {
                 }
                 while (play) {
                     enableButtons();
-                    waitForPlayer();
+                    waitForPlayer(primaryStage);
                     toServer.writeInt(move);
                     disableButtons();
                     receiveOutcome(player, primaryStage);
@@ -286,15 +286,29 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * Creates a waiting cycle for the client if they are waiting for the other player. It
+     * sleeps the thread until the move is made by the other player.
+     *
+     * @param primaryStage The stage of the GUI to be able to set different scenes throughout gameplay.
+     * @throws InterruptedException If the other player disconnects, then this client wins and moves to final scene.
      */
-    private void waitForPlayer() throws InterruptedException {
+    private void waitForPlayer(Stage primaryStage) throws InterruptedException {
         // Sleep thread until waiting is false
         while (waiting) {
             Thread.sleep(100);
             try {
                 if (fromServer.available() > 0) {
-                    //TODO: handle ending game and skipping to final screen
+                    if (fromServer.readInt() == 9) {
+                        Platform.runLater(() -> {
+                            status.setText("Other player disconnected. You Win!");
+                            try {
+                                Thread.sleep(2000);
+                                primaryStage.setScene(scene2);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    }
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -306,7 +320,14 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * The final part of each round where the client receives who won the round,
+     * indication of each player's move, the updated scores, and if there is a
+     * full game winner.
+     *
+     * @param player The integer representation of this client player number.
+     * @param primaryStage The stage of the GUI to be able to set different scenes throughout gameplay.
+     * @throws IOException IOException if there are issues with the connections to the server.
+     * @throws Exception Final exception handling in case of any other exceptions.
      */
     private void receiveOutcome(int player, Stage primaryStage) throws IOException, Exception {
         // Receive round winner
@@ -395,7 +416,7 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * Enables the move buttons to be clicked.
      */
     private void enableButtons() {
         rock.setDisable(false);
@@ -404,7 +425,7 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * Disables the move buttons to be clicked.
      */
     private void disableButtons() {
         rock.setDisable(true);
@@ -412,8 +433,13 @@ public class RPSClient extends Application implements RPSConstants {
         scissors.setDisable(true);
     }
 
-    // TODO
-    private String moveAsString(int move) throws Exception {
+    /**
+     * Creates a string representation of the move selected by a player.
+     *
+     * @param move The integer representation of a player's move.
+     * @return The String representation of a player's move.
+     */
+    private String moveAsString(int move) {
         if (move == ROCK) {
             return "Rock";
         }
@@ -424,7 +450,10 @@ public class RPSClient extends Application implements RPSConstants {
     }
 
     /**
-     * TODO
+     * Placeholder for arguments as the start() method runs
+     * the application.
+     *
+     * @param args The command line arguments.
      */
     public static void main(String[] args) {
         launch(args);
