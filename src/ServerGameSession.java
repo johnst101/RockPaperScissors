@@ -13,8 +13,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class ServerGameSession implements Runnable, RPSConstants {
     /**Connection to Player 1's client*/
@@ -35,16 +37,19 @@ public class ServerGameSession implements Runnable, RPSConstants {
     private int player1Wins = 0;
     /**Number of wins for Player 2*/
     private int player2Wins = 0;
+    /**TODO*/
+    private List<Socket> clients;
 
     /**
      * TODO
      */
-    public ServerGameSession(DataOutputStream toPlayer1, DataOutputStream toPlayer2, Socket player1, Socket player2, TextArea log) {
-        this.toPlayer1 = toPlayer1;
-        this.toPlayer2 = toPlayer2;
+    public ServerGameSession(Socket player1, Socket player2, TextArea log) {
         this.player1 = player1;
         this.player2 = player2;
         this.log = log;
+        this.clients = new ArrayList<>();
+        clients.add(player1);
+        clients.add(player2);
     }
 
     /**
@@ -64,9 +69,9 @@ public class ServerGameSession implements Runnable, RPSConstants {
         try {
             fromPlayer1 = new DataInputStream(player1.getInputStream());
             fromPlayer2 = new DataInputStream(player2.getInputStream());
+            toPlayer1 = new DataOutputStream(player1.getOutputStream());
+            toPlayer2 = new DataOutputStream(player2.getOutputStream());
 
-            toPlayer1.writeInt(PLAYER1);
-            toPlayer2.writeInt(PLAYER2);
             // Infinite loop until win or draw state reached
             while(true) {
                 // Receive move from player1
@@ -81,6 +86,7 @@ public class ServerGameSession implements Runnable, RPSConstants {
                     // notify players of results
                     toPlayer1.writeInt(PLAYER1_ROUND_WIN);
                     toPlayer2.writeInt(PLAYER1_ROUND_WIN);
+                    player1Wins++;
                     // Send moves to each player and updated score
                     sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
 
@@ -89,6 +95,7 @@ public class ServerGameSession implements Runnable, RPSConstants {
                     // notify players of results
                     toPlayer1.writeInt(PLAYER2_ROUND_WIN);
                     toPlayer2.writeInt(PLAYER2_ROUND_WIN);
+                    player2Wins++;
                     // Send moves to each player and updated score
                     sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
                 } else { // Else
@@ -98,30 +105,10 @@ public class ServerGameSession implements Runnable, RPSConstants {
                     toPlayer2.writeInt(ROUND_DRAW);
                     // Send moves to each player and updated score
                     sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
-                    // continue
-                    continue;
                 }
-//                // Check for full game win
-//                // If player1Wins equals 5 AND player2Wins less than 5
-//                if (player1Wins == 5 && player2Wins < 5) {
-//                    // Notify players that player1 won the game
-//                    toPlayer1.writeInt(PLAYER1_TOTAL_WIN);
-//                    toPlayer2.writeInt(PLAYER1_TOTAL_WIN);
-//                    // Send moves to each player and updated score
-//                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
-//                }
-//                // If player2Wins equals 5 AND player1Wins less than 5
-//                if (player2Wins == 5 && player1Wins < 5) {
-//                    // Notify players that player2 won the game
-//                    toPlayer1.writeInt(PLAYER2_TOTAL_WIN);
-//                    toPlayer2.writeInt(PLAYER2_TOTAL_WIN);
-//                    // Send moves to each player and updated score
-//                    sendResults(toPlayer1, toPlayer2, player1Move, player2Move, player1Wins, player2Wins);
-//                }
             }
         } catch (IOException e) {
-             e.printStackTrace();
-             log.appendText(new Date() + ": \n" + "\t" + Arrays.toString(e.getStackTrace()));
+            handleDisconnection(); //TODO:
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -214,5 +201,28 @@ public class ServerGameSession implements Runnable, RPSConstants {
         toPlayer1.writeInt(player2Move);
         toPlayer2.writeInt(player1Move);
         toPlayer2.writeInt(player2Move);
+    }
+
+    /**
+     * TODO
+     * @param disconnectedClient
+     */
+    private void handleDisconnection(Socket disconnectedClient) {
+        clients.remove(disconnectedClient);
+        for (Socket client : clients) {
+            if (client == player1) {
+                try {
+                    toPlayer1.writeInt(9);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (client == player2) {
+                try {
+                    toPlayer2.writeInt(9);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

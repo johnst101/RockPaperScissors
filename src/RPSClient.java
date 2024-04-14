@@ -48,13 +48,19 @@ public class RPSClient extends Application implements RPSConstants {
     private boolean waiting = true;
     /**TODO*/
     private boolean play = true;
-    private Button rock = new Button("Rock");
+    private Button rock = new Button();
     /**TODO*/
-    private Button paper = new Button("Paper");
+    private Button paper = new Button();
     /**TODO*/
-    private Button scissors = new Button("Scissors");
+    private Button scissors = new Button();
     /**TODO*/
     private int move;
+    /**TODO*/
+    private Socket socket;
+    /**TODO*/
+    private Scene scene;
+    /**TODO*/
+    private Scene scene2;
 
     /**
      * TODO
@@ -65,32 +71,30 @@ public class RPSClient extends Application implements RPSConstants {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Buttons customized to be the symbols
-        Image rockImg = new Image("Rock.png");
-        ImageView rockImgView = new ImageView(rockImg);
-        Image paperImg = new Image("Paper.png");
-        ImageView paperImgView = new ImageView(paperImg);
-        Image scissorsImg = new Image("Scissors.png");
-        ImageView scissorsImgView = new ImageView(scissorsImg);
+        // PLAY SCENE CONTENT //
         // Rock button
-        rock.setGraphic(rockImgView);
+        rock.setGraphic(new ImageView(new Image("Rock.png")));
         // Paper button
-        paper.setGraphic(paperImgView);
+        paper.setGraphic(new ImageView(new Image("Paper.png")));
         // Scissors button
-        scissors.setGraphic(scissorsImgView);
+        scissors.setGraphic(new ImageView(new Image("Scissors.png")));
         disableButtons();
+
+        Button quit = new Button("Quit Game");
 
         // Hbox for move options
         HBox buttonContainer = new HBox(rock, paper, scissors);
         buttonContainer.setAlignment(Pos.CENTER);
         buttonContainer.setSpacing(10);
+        buttonContainer.setPadding(new Insets(10));
 
         // Title and Status containers
         VBox titleContainer = new VBox(title);
         titleContainer.setAlignment(Pos.CENTER);
         titleContainer.setPadding(new Insets(10));
         title.setFont(new Font("Arial", 24));
-        VBox statusContainer = new VBox(status);
+        VBox statusContainer = new VBox(status, quit);
+        statusContainer.setSpacing(20);
         statusContainer.setAlignment(Pos.CENTER);
         statusContainer.setPadding(new Insets(10));
         status.setFont(new Font("Arial", 16));
@@ -110,14 +114,24 @@ public class RPSClient extends Application implements RPSConstants {
         player2ScoreTitle.setFont(new Font("Arial", 16));
         player2Score.setFont(new Font("Arial", 16));
 
+        // END SCENE //
+        Button quit1 = new Button("Quit Game");
+        Button playAgain = new Button("Play Again");
+        HBox endContainer = new HBox(quit1, playAgain);
+
         // BorderPane to hold all content
-        BorderPane pane = new BorderPane(buttonContainer, titleContainer, player2Container, statusContainer, player1Container);
+        BorderPane pane1 = new BorderPane(buttonContainer, titleContainer, player2Container, statusContainer, player1Container);
+        BorderPane pane2 = new BorderPane();
+        pane2.setCenter(endContainer);
 
         // Create Scene for pane
-        Scene scene = new Scene(pane, 1200, 700);
+        scene = new Scene(pane1, 1200, 700);
+        scene2 = new Scene(pane2, 500, 700);
         primaryStage.setTitle("Rock, Paper, Scissors");
         // Set Scene
         primaryStage.setScene(scene);
+        primaryStage.minWidthProperty().bind(scene.widthProperty());
+        primaryStage.minHeightProperty().bind(scene.heightProperty());
         // Show stage
         primaryStage.show();
 
@@ -139,6 +153,45 @@ public class RPSClient extends Application implements RPSConstants {
             waiting = false;
         });
 
+        quit.setOnAction(e -> {
+            play = false;
+            try {
+                socket.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+            primaryStage.close();
+            System.exit(0);
+        });
+
+        quit1.setOnAction(e -> {
+            play = false;
+            try {
+                socket.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+            primaryStage.close();
+            System.exit(0);
+        });
+
+        playAgain.setOnAction(e -> {
+            try {
+                socket.close();
+                primaryStage.close();
+                Platform.runLater(() -> {
+                    try {
+                        RPSClient newGame = RPSClient.class.newInstance();
+                        newGame.start(new Stage());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        });
+
         // connectToServer
         connectToServer(primaryStage);
     }
@@ -150,7 +203,7 @@ public class RPSClient extends Application implements RPSConstants {
         // TRY //
         try {
             // Create Socket
-            Socket socket = new Socket(host, 8000);
+            socket = new Socket(host, 8000);
             // Initialize input and output streams
             fromServer = new DataInputStream(socket.getInputStream());
             toServer = new DataOutputStream(socket.getOutputStream());
@@ -160,9 +213,14 @@ public class RPSClient extends Application implements RPSConstants {
             e.printStackTrace();
             status.setText("Error occurred when connecting. Closing the game.");
             primaryStage.close();
+            try {
+                socket.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
         }
 
-        Thread newSession = new Thread(new ClientGameSession());
+        Thread newSession = new Thread(new ClientGameSession(primaryStage));
         newSession.start();
     }
 
@@ -170,6 +228,12 @@ public class RPSClient extends Application implements RPSConstants {
      * TODO
      */
     private class ClientGameSession implements Runnable {
+        private Stage primaryStage;
+
+        public ClientGameSession(Stage primaryStage) {
+            this.primaryStage = primaryStage;
+        }
+
         /**
          * When an object implementing interface <code>Runnable</code> is used
          * to create a thread, starting the thread causes the object's
@@ -195,7 +259,6 @@ public class RPSClient extends Application implements RPSConstants {
                         status.setText("Waiting for Player 2 to join");
                     });
 
-                    // Receive indicator of player2 join
                     fromServer.readInt();
 
                     // Display notification of player2 join
@@ -212,7 +275,7 @@ public class RPSClient extends Application implements RPSConstants {
                     waitForPlayer();
                     toServer.writeInt(move);
                     disableButtons();
-                    receiveOutcome(player);
+                    receiveOutcome(player, primaryStage);
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -229,6 +292,14 @@ public class RPSClient extends Application implements RPSConstants {
         // Sleep thread until waiting is false
         while (waiting) {
             Thread.sleep(100);
+            try {
+                if (fromServer.available() > 0) {
+                    //TODO: handle ending game and skipping to final screen
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
         }
 
         waiting = true;
@@ -237,7 +308,7 @@ public class RPSClient extends Application implements RPSConstants {
     /**
      * TODO
      */
-    private void receiveOutcome(int player) throws IOException, Exception {
+    private void receiveOutcome(int player, Stage primaryStage) throws IOException, Exception {
         // Receive round winner
         int roundWinner = fromServer.readInt();
         // Receive scores
@@ -293,11 +364,13 @@ public class RPSClient extends Application implements RPSConstants {
                     // Notify, "You Won!"
                     Platform.runLater(() -> {
                         status.setText("You Won!");
+                        primaryStage.setScene(scene2);
                     });
                 } else { // else if client is player2
                     // Notify, "Player 1 Won."
                     Platform.runLater(() -> {
                         status.setText("Player 1 Won.");
+                        primaryStage.setScene(scene2);
                     });
                 }
             } else if (player2Wins == 5) {
@@ -308,11 +381,13 @@ public class RPSClient extends Application implements RPSConstants {
                     // Notify, "Player 2 Won."
                     Platform.runLater(() -> {
                         status.setText("Player 2 Won.");
+                        primaryStage.setScene(scene2);
                     });
                 } else { // else if client is player2
                     // Notify, "You Won!"
                     Platform.runLater(() -> {
                         status.setText("You Won!");
+                        primaryStage.setScene(scene2);
                     });
                 }
             }

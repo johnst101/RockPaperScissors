@@ -14,18 +14,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class ServerSession implements Runnable, RPSConstants {
     /**Which session or game is being connected/played.*/
     private int gameNumber = 1;
     /**The server log visualization element*/
     private TextArea log;
-    /**Connection to Player 1's client to send connection messages.*/
-    private DataOutputStream toPlayer1;
-    /**Connection to Player 2's client to send connection messages.*/
-    private DataOutputStream toPlayer2;
 
     public ServerSession(TextArea log) {
         this.log = log;
@@ -54,7 +51,7 @@ public class ServerSession implements Runnable, RPSConstants {
                 Platform.runLater(() -> log.appendText(new Date() + ": Waiting for players to join session " + gameNumber + "\n"));
                 // Connect first player
                 Socket player1 = serverSocket.accept();
-                toPlayer1 = new DataOutputStream(player1.getOutputStream());
+                DataOutputStream toPlayer1 = new DataOutputStream(player1.getOutputStream());
                 // Log first player information
                 Platform.runLater(() -> {
                     log.appendText(new Date() + ": Player 1 has joined game " + gameNumber + "\n");
@@ -65,7 +62,7 @@ public class ServerSession implements Runnable, RPSConstants {
 
                 // Connect second player
                 Socket player2 = serverSocket.accept();
-                toPlayer2 = new DataOutputStream(player2.getOutputStream());
+                DataOutputStream toPlayer2 = new DataOutputStream(player2.getOutputStream());
                 // Log second player information
                 Platform.runLater(() -> {
                     log.appendText(new Date() + ": Player 2 has joined game " + gameNumber + "\n");
@@ -73,16 +70,17 @@ public class ServerSession implements Runnable, RPSConstants {
                 });
                 // Notify second player they are connected and 'Player 2'
                 toPlayer2.writeInt(PLAYER2);
+                // Notification that second player joined
+                toPlayer1.writeInt(1);
 
                 // Log that GameSession x is starting
                 Platform.runLater(() -> log.appendText(new Date() + ": Starting thread for game " + gameNumber + "\n"));
                 gameNumber++;
-                // Start new GameSession on new thread
-                new Thread(new ServerGameSession(toPlayer1, toPlayer2, player1, player2, log)).start();
+                new Thread(new ServerGameSession(player1, player2, log)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
-            log.appendText(new Date() + ": \n" + "\t" + Arrays.toString(e.getStackTrace()));
+            System.exit(0);
         }
     }
 }
